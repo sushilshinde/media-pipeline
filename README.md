@@ -1,108 +1,142 @@
-# Voice Models
+# Voice Transcription Pipeline
 
-A Python project for efficient speech-to-text transcription using the Whisper model.
-
-## Overview
-
-This project utilizes [faster-whisper](https://github.com/SYSTRAN/faster-whisper), an optimized implementation of OpenAI's Whisper model, to perform high-quality speech recognition. It's designed to run efficiently on both CPU and GPU environments.
+A powerful and flexible pipeline for transcribing audio and video files using the faster-whisper library. This project provides a complete solution from file discovery to transcription, with support for various input formats and configuration options.
 
 ## Features
 
-- Fast and accurate speech-to-text transcription
-- Support for multiple languages
-- GPU acceleration with FP16 and INT8 precision options
-- Timestamp generation for transcribed segments
-- Language detection with probability scores
-- Interactive input file selection
-- Configurable through environment variables
+- **Multi-format Support**: Handles various audio and video formats (MP3, WEBM, WAV, etc.)
+- **Automatic Format Conversion**: Converts non-MP3 files to MP3 format using ffmpeg
+- **GPU Acceleration**: Supports CUDA for faster transcription
+- **Interactive Input**: User-friendly file selection
+- **Configurable Output**: Flexible output file location and format
+- **Progress Tracking**: Real-time transcription progress display with fancy progress bars
+- **Language Detection**: Automatic language detection with confidence scores
+- **Timestamp Support**: Optional timestamps in the transcript
+- **Modular Design**: Separate components for discovery, conversion, and transcription
 
 ## Prerequisites
 
 - Python 3.10 or higher
-- CUDA-compatible GPU (optional, for GPU acceleration)
-- [uv](https://github.com/astral-sh/uv) package manager
+- ffmpeg (for format conversion)
+- CUDA-compatible GPU (optional, for faster processing)
 
 ## Installation
 
 1. Clone the repository:
-```bash
-git clone https://github.com/yourusername/voice-models.git
-cd voice-models
-```
+   ```bash
+   git clone https://github.com/yourusername/voice-models.git
+   cd voice-models
+   ```
 
-2. Create and activate the virtual environment using uv:
-```bash
-uv venv
-source .venv/bin/activate  # On Windows: .venv\Scripts\activate
-```
+2. Create and activate a virtual environment:
+   ```bash
+   python -m venv .venv
+   source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+   ```
 
 3. Install dependencies:
-```bash
-uv pip install -e .
-```
+   ```bash
+   pip install -e .
+   ```
+
+4. Install ffmpeg:
+   - On macOS: `brew install ffmpeg`
+   - On Ubuntu: `sudo apt-get install ffmpeg`
+   - On Windows: Download from [ffmpeg.org](https://ffmpeg.org/download.html)
 
 ## Configuration
 
-The project uses a `.env` file for configuration. Create a `.env` file with the following settings:
+The project can be configured using a `.env` file. Create a `.env` file in the project root with the following options:
 
 ```env
 # Model settings
-MODEL_SIZE=large-v3
-DEVICE=cpu
-COMPUTE_TYPE=int8
+MODEL_SIZE=large-v2  # Options: tiny, base, small, medium, large-v1, large-v2
+DEVICE=cuda  # Options: cpu, cuda
+COMPUTE_TYPE=float16  # Options: float16, float32, int8, int8_float16
 
 # Output settings
-SHOW_TIMESTAMPS=false
-# OUTPUT_FILE=./path/to/custom/output.txt
-
-# Transcription settings
-BEAM_SIZE=5
+SHOW_TIMESTAMPS=true  # Options: true, false
+OUTPUT_FILE=/path/to/output.txt  # Optional, defaults to input file directory
+BEAM_SIZE=5  # Higher values may improve accuracy but slow down processing
 ```
-
-### Configuration Options
-
-- `MODEL_SIZE`: Whisper model size ("tiny", "base", "small", "medium", "large-v1", "large-v2", "large-v3")
-- `DEVICE`: Processing device ("cpu" or "cuda")
-- `COMPUTE_TYPE`: Computation precision ("int8", "float16", or "int8_float16")
-- `SHOW_TIMESTAMPS`: Whether to show timestamps in output (true/false)
-- `OUTPUT_FILE`: Optional custom output file path
-- `BEAM_SIZE`: Beam size for transcription (default: 5)
 
 ## Usage
 
-1. Run the script:
+### Running the Complete Pipeline
+
+To transcribe an audio/video file:
+
 ```bash
-uv run main.py
+python pipeline.py [input_file]
 ```
 
-2. When prompted, enter the full path to your audio file:
+If no input file is provided, you'll be prompted to enter the path.
+
+The pipeline will show detailed progress for each step:
 ```
-Please enter the full path to the input audio file: /path/to/your/audio.mp3
+🔍 Discovering file...
+✅ File discovered: /path/to/input.webm (format: webm)
+
+🔄 Converting WEBM to MP3...
+[████████████████████████████████████████] 100%
+✅ Conversion complete: /path/to/input.mp3
+
+🎤 Starting transcription...
+Detected language: en (probability: 0.95)
+[████████████████████████████████████████] 100%
+✅ Transcription complete: /path/to/input.txt
 ```
 
-3. The script will:
-   - Transcribe the audio file
-   - Show progress in real-time
-   - Create the transcript in the same directory as the input file (unless OUTPUT_FILE is specified)
-   - Display the detected language and probability
+### Running Individual Components
+
+1. **Discover Task**:
+   ```bash
+   python discover.py
+   ```
+
+2. **Convert Task**:
+   ```bash
+   python convert.py input_file format
+   ```
+
+3. **Transcribe Task**:
+   ```bash
+   python transcribe.py input_file
+   ```
 
 ## Output
 
-The transcription will be saved to a text file in the same directory as the input file (with .txt extension) unless a custom output path is specified in the .env file.
+The pipeline generates a transcript file in the same directory as the input file (unless specified otherwise in the `.env` file). The output includes:
 
-Example output format:
+- Detected language and confidence score
+- Transcription with optional timestamps
+- Progress updates during processing
+
+Example output:
 ```
 Detected language: en (probability: 0.95)
 
-[0.00s -> 2.50s] First segment text
-[2.50s -> 5.00s] Second segment text
-...
+[0.00s -> 2.50s] Hello, this is a test recording.
+[2.50s -> 5.00s] I'm testing the transcription pipeline.
 ```
 
-## License
+## Project Structure
 
-[Add your license here]
+```
+voice-models/
+├── pipeline.py      # Main pipeline orchestrator
+├── discover.py      # File discovery and validation
+├── convert.py       # Format conversion
+├── transcribe.py    # Transcription using faster-whisper
+├── config.py        # Configuration management
+├── .env            # Environment variables (optional)
+└── README.md       # This file
+```
 
 ## Contributing
 
-[Add contribution guidelines here]
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+## License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
